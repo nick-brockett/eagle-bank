@@ -1,0 +1,32 @@
+services:
+  webserver:
+    container_name: eagle-webserver
+    build: .
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-db
+  postgres-db:
+    image: postgres
+    volumes:
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql
+      - pgdata:/var/lib/postgresql/data
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=postgres
+
+volumes:
+  pgdata: {}
+
+
