@@ -4,6 +4,8 @@ import (
 	"eagle-bank.com/internal/core/domain/model"
 )
 
+//go:generate moq -pkg mocks -out ./mocks/user_service.go . UserService
+
 type UserService interface {
 	CreateUser(user *model.NewUser) (*model.User, error)
 	GetUserByID(id string) (*model.User, error)

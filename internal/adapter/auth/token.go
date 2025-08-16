@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"eagle-bank.com/internal/core/domain/model"
 	"eagle-bank.com/internal/core/port"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -12,13 +13,34 @@ import (
 )
 
 type Config struct {
-	APISecret     string `env:"API_SECRET, default=eagle-bank-secret"`
-	TokenLifeSpan string `env:"TOKEN_LIFESPAN, default=60m"`
+	APISecret          string `env:"API_SECRET, default=eagle-bank-secret"`
+	AccessTokenExpiry  string `env:"ACCESS_TOKEN_EXPIRY, default=15m"`
+	RefreshTokenExpiry string `env:"REFRESH_TOKEN_EXPIRY, default=60m"`
 }
 
 type Service struct {
-	apiSecret string
-	timeout   time.Duration
+	apiSecret          string
+	accessTokenExpiry  time.Duration
+	refreshTokenExpiry time.Duration
+}
+
+func NewService(config Config) (port.AuthService, error) {
+
+	accessTokenExpiry, err := time.ParseDuration(config.AccessTokenExpiry)
+	if err != nil {
+		return nil, errors.New("invalid access token expiry format")
+	}
+
+	refreshTokenExpiry, err := time.ParseDuration(config.RefreshTokenExpiry)
+	if err != nil {
+		return nil, errors.New("invalid refresh token expiry format")
+	}
+
+	return &Service{
+		apiSecret:          config.APISecret,
+		accessTokenExpiry:  accessTokenExpiry,
+		refreshTokenExpiry: refreshTokenExpiry,
+	}, nil
 }
 
 func (s *Service) ValidateSetPasswordToken(c *gin.Context) error {
@@ -28,33 +50,50 @@ func (s *Service) ValidateSetPasswordToken(c *gin.Context) error {
 
 		bToken = strings.Split(bearerToken, " ")[1]
 	}
-	fmt.Println(bToken)
+	//TODO inspect claims
+	_ = bToken
 	return nil
 }
 
-func NewService(config Config) (port.AuthService, error) {
-	timeout, err := time.ParseDuration(config.TokenLifeSpan)
-	if err != nil {
-		return nil, errors.New("invalid token lifespan format")
+func (s *Service) getAccessTokenExpirationTime() time.Time {
+	return time.Now().Add(s.accessTokenExpiry)
+}
+
+func (s *Service) getRefreshTokenExpirationTime() time.Time {
+	return time.Now().Add(s.accessTokenExpiry)
+}
+
+func (s *Service) GenerateTokens(userID string, roles []string) (*model.TokenPair, error) {
+
+	accessClaims := jwt.MapClaims{
+		"user_id": userID,
+		"roles":   roles,
+		"exp":     s.getAccessTokenExpirationTime(),
+		"iat":     time.Now().Unix(),
 	}
-	return &Service{
-		apiSecret: config.APISecret,
-		timeout:   timeout,
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(s.apiSecret))
+
+	if err != nil {
+		return nil, err
+	}
+
+	refreshClaims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "refresh",
+		"exp":     s.getRefreshTokenExpirationTime(),
+		"iat":     time.Now().Unix(),
+	}
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(s.apiSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.TokenPair{
+		AccessToken:   accessToken,
+		RefreshToken:  refreshToken,
+		AccessExpiry:  s.getAccessTokenExpirationTime(),
+		RefreshExpiry: s.getRefreshTokenExpirationTime(),
 	}, nil
-}
-
-func (s *Service) GetTokenExpirationTime() time.Time {
-	return time.Now().Add(s.timeout)
-}
-
-func (s *Service) GenerateToken(userID string, role string) (string, error) {
-	claims := jwt.MapClaims{}
-	claims["user_id"] = userID
-	claims["exp"] = time.Now().Add(s.timeout).Unix()
-	claims["role"] = role
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte(s.apiSecret))
 }
 
 func (s *Service) ValidateToken(c *gin.Context) error {
@@ -69,6 +108,7 @@ func (s *Service) ValidateToken(c *gin.Context) error {
 		return err
 	}
 
+	//TODO: consider the whole blacklist and revoking mechanism for each token IDs (REDIS)
 	if !token.Valid {
 		return fmt.Errorf("token is invalid")
 	}

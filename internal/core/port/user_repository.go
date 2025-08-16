@@ -5,6 +5,8 @@ import (
 	"eagle-bank.com/internal/core/domain/model"
 )
 
+//go:generate moq -pkg mocks -out ./mocks/user_repository.go . UserRepository
+
 type UserRepository interface {
 	CreateUser(newUser *model.NewUser) (*model.User, error)
 	UpdateUser(user *model.User) (*model.User, error)

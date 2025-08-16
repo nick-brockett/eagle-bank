@@ -1,5 +1,7 @@
 package model
 
+import "github.com/asaskevich/govalidator"
+
 type NewUser struct {
 	Name        string  `json:"name" valid:"required"`
 	Email       string  `json:"email" valid:"required"`
@@ -25,4 +27,8 @@ type User struct {
 	Town        string  `json:"town"`
 	County      *string `json:"county"`
 	Postcode    string  `json:"postcode"`
+}
+
+func (n *NewUser) Valid() (bool, error) {
+	return govalidator.ValidateStruct(n)
 }

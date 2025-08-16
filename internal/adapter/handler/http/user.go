@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"time"
 
 	"eagle-bank.com/internal/core/domain/model"
 	"eagle-bank.com/internal/core/port"
@@ -48,15 +47,20 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	user, err := h.userService.Login(request.Email, request.Password)
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorised"})
 		return
 	}
-	token, err := h.authService.GenerateToken(user.ID, "user")
+	tokens, err := h.authService.GenerateTokens(user.ID, []string{"create_account", "deposit", "withdraw"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   token,
-		"expires": h.authService.GetTokenExpirationTime().Format(time.RFC3339),
+		"message":      "Login successful",
+		"accessToken":  tokens.AccessToken,
+		"refreshToken": tokens.RefreshToken,
+		"expires":      tokens.AccessExpiry.Unix(),
 	})
 }
 
@@ -91,6 +95,14 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid request",
 		})
+		return
+	}
+	valid, err := newUser.Valid()
+	if !valid || err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid request",
+		})
+		return
 	}
 	user, err := h.userService.CreateUser(&newUser)
 	if err != nil {
@@ -127,12 +139,17 @@ func (h *UserHandler) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.GenerateToken(user.ID, "user-set-password")
+	tokens, err := h.authService.GenerateTokens(user.ID, []string{"set-password"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Email verified successfully",
-		"token":   token,
-		"expires": h.authService.GetTokenExpirationTime().Format(time.RFC3339),
+		"message":      "Email verified successfully",
+		"accessToken":  tokens.AccessToken,
+		"refreshToken": tokens.RefreshToken,
+		"expires":      tokens.AccessExpiry.Unix(),
 	})
 }
 
