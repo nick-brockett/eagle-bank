@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"time"
 
 	"eagle-bank.com/internal/adapter/storage/postgres"
 	"eagle-bank.com/internal/adapter/storage/postgres/repository/entity"
@@ -28,20 +29,27 @@ func NewAccountRepository(db *postgres.DBContext) *AccountRepository {
 	}
 }
 
+// TODO: inject a clock into this method for ease of testing
+
 func (ar *AccountRepository) CreateAccount(newAccount *model.NewAccount) (*model.UserAccount, error) {
 
 	account, err := entity.NewAccount(
 		entity.WithAccountUserID(newAccount.UserID),
+		entity.WithAccountNumber(newAccount.AccountNumber),
 		entity.WithAccountBalance(decimal.Zero),
 		entity.WithAccountName(newAccount.Name),
 		entity.WithAccountType(newAccount.Type),
+		entity.WithAccountCurrency("GBP"),
+		entity.WithAccountCreatedAt(time.Now()),
+		entity.WithAccountUpdatedAt(time.Now()),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	userAccount, err := entity.NewUserAccount(
-		entity.WithUserAccountUserID(uuid.NewString()),
+		entity.WithUserAccountID(uuid.NewString()),
+		entity.WithUserAccountUserID(newAccount.UserID),
 		entity.WithUserAccountNumber(newAccount.AccountNumber),
 	)
 	if err != nil {
@@ -68,9 +76,6 @@ func (ar *AccountRepository) CreateAccount(newAccount *model.NewAccount) (*model
 		}
 	}()
 
-	userAccountQuery := `	INSERT INTO eagle.user_accounts (id, user_id, account_number, reated_at) 
-				VALUES (:id, :user_id, :account_number, :created_at)`
-
 	accountQuery := `	INSERT INTO eagle.accounts (account_number, sort_code, name, account_type, balance, currency, created_at) 
 				VALUES (:account_number, :sort_code, :name, :account_type, :balance, :currency, :created_at)`
 
@@ -84,6 +89,9 @@ func (ar *AccountRepository) CreateAccount(newAccount *model.NewAccount) (*model
 		}
 		return nil, errors.New("error encountered creating account ")
 	}
+
+	userAccountQuery := `	INSERT INTO eagle.user_accounts (id, user_id, account_number, created_at) 
+				VALUES (:id, :user_id, :account_number, :created_at)`
 
 	_, err = tx.NamedExec(userAccountQuery, userAccount.FromEntity())
 	if err != nil {

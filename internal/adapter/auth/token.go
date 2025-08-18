@@ -68,7 +68,7 @@ func (s *Service) GenerateTokens(userID string, roles []string) (*model.TokenPai
 	accessClaims := jwt.MapClaims{
 		"user_id": userID,
 		"roles":   roles,
-		"exp":     s.getAccessTokenExpirationTime(),
+		"exp":     s.getAccessTokenExpirationTime().Unix(),
 		"iat":     time.Now().Unix(),
 	}
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(s.apiSecret))
@@ -80,7 +80,7 @@ func (s *Service) GenerateTokens(userID string, roles []string) (*model.TokenPai
 	refreshClaims := jwt.MapClaims{
 		"user_id": userID,
 		"type":    "refresh",
-		"exp":     s.getRefreshTokenExpirationTime(),
+		"exp":     s.getRefreshTokenExpirationTime().Unix(),
 		"iat":     time.Now().Unix(),
 	}
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(s.apiSecret))

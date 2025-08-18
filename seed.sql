@@ -1,6 +1,8 @@
 CREATE SCHEMA IF NOT EXISTS eagle;
 SET SCHEMA 'eagle';
 
+DROP TABLE IF EXISTS user_accounts;
+DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS user_verification_tokens;
 DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS users;
@@ -80,8 +82,8 @@ CREATE TABLE accounts (
                          account_type       account_type NOT NULL,
                          balance            NUMERIC(15,2) NOT NULL DEFAULT 0.00, -- allows for large values, 2 decimal places
                          currency           CHAR(3) NOT NULL,     -- ISO currency code like GBP, USD
-                         created_timestamp  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                         updated_timestamp  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+                         created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                         updated_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 /* TODO CREATE ACCOUNT HISTORY TABLES */
@@ -89,7 +91,7 @@ CREATE TABLE accounts (
 CREATE TABLE user_accounts (
                                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                               account_number CHAR(8) NOT NULL REFERENCES account(account_number) ON DELETE CASCADE,
+                               account_number CHAR(8) NOT NULL REFERENCES accounts(account_number) ON DELETE CASCADE,
                                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                UNIQUE (user_id, account_number) -- prevents duplicate user/account pairs
 );

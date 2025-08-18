@@ -10,7 +10,7 @@ import (
 type Config struct {
 	Username     string `env:"POSTGRES_USER, default=postgres"`
 	Password     string `env:"POSTGRES_PASSWORD, default=password123"`
-	Host         string `env:"POSTGRES_HOST, default=localhost"` //default=postgres-db"`
+	Host         string `env:"POSTGRES_HOST, default=localhost"`
 	Port         string `env:"POSTGRES_PORT, default=5432"`
 	DatabaseName string `env:"POSTGRES_DB, default=postgres"`
 	SSLMode      string `env:"POSTGRES_SSL_MODE, default=disable"`
