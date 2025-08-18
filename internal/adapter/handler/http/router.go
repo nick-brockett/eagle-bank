@@ -30,11 +30,19 @@ func NewRouter(
 			{
 				authUser.GET("/:userId", userHandler.GetUser)
 				authUser.POST("/set-password", userHandler.SetPassword)
-				authUser.POST("/account", accountHandler.CreateAccount)
+				authUser.PATCH("/:userId", userHandler.UpdateUser)
+			}
+		}
+		account := v1.Group("/accounts")
+		{
+			authAccount := account.Group("/").Use(AuthMiddleware(authService))
+			{
+				authAccount.POST("/", accountHandler.CreateAccount)
+				authAccount.GET("/", accountHandler.ListAccounts)
+				authAccount.GET("/:accountNumber", accountHandler.GetAccount)
 			}
 
 		}
-
 	}
 	return &Router{
 		router,

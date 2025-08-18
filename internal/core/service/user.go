@@ -105,18 +105,7 @@ func ValidateNewUser(p *model.NewUser) error {
 }
 
 func ValidateNewUserAddress(p *model.NewUser) error {
-	//if p.Options == nil {
-	//	return errors.New("Poll options cannot be nil")
-	//}
-	//if lb.HasDuplicates(p.Options) {
-	//	return errors.New("Poll options cannot contain duplicates")
-	//}
-	//if len(p.Options) < 2 {
-	//	return errors.New("Poll must have at least two options")
-	//}
-	//if len(p.Options) > 7 {
-	//	return errors.New("Poll can not have more than 7 options")
-	//}
+	//TODO: validate specific address details such as post code format
 	return nil
 }
 

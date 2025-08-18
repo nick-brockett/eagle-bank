@@ -451,6 +451,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /v1/users/verify-email:
+    post:
+      tags:
+        - user
+      description: Verify Email
+      operationId: verifyEmail
+      requestBody:
+          description: Verify user email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyEmailRequest"
+          required: true
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /v1/users/set-password:
+    post:
+      tags:
+        - user
+      description: Set Password
+      operationId: setPassword
+      requestBody:
+        description: Set Password
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPasswordRequest"
+        required: true
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Password set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /v1/users/login:
+    post:
+      tags:
+        - user
+      description: Login
+      operationId: Login
+      requestBody:
+        description: Login
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /v1/users/{userId}:
     get:
       tags:
@@ -814,6 +902,39 @@ components:
         email:
           type: string
           format: email
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          examples:
+            - "Test Verify Email"
+    SetPasswordRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          examples:
+            - "Email"
+        password:
+           type: string
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          examples:
+            - "Email"
+        password:
+          type: string
     UpdateUserRequest:
       type: object
       properties:

@@ -5,21 +5,30 @@ import (
 
 	"eagle-bank.com/internal/core/domain/model"
 	"eagle-bank.com/internal/core/port"
+	"go.uber.org/zap"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 func NewUserHandler(
+	logger *zap.SugaredLogger,
 	authService port.AuthService,
 	userService port.UserService,
 ) UserHandler {
 	return UserHandler{
+		logger:      logger,
 		authService: authService,
 		userService: userService,
 	}
 }
 
+type ErrorResponse struct {
+	Message string
+}
+
 type UserHandler struct {
+	logger      *zap.SugaredLogger
 	authService port.AuthService
 	userService port.UserService
 }
@@ -39,6 +48,7 @@ type LoginRequest struct {
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
+	h.logger.Infow("Login handler started")
 	var request LoginRequest
 	if err := c.BindJSON(&request); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
@@ -65,6 +75,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
+	h.logger.Infow("GetUser handler started")
 	userIDParam := c.Param("userId")
 	userID, err := uuid.Parse(userIDParam)
 	if err != nil {
@@ -90,6 +101,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
+	h.logger.Infow("CreateUser handler started")
 	var newUser model.NewUser
 	if err := c.BindJSON(&newUser); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
@@ -112,17 +124,23 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 	// TODO: suggested flow is that after creating a new User account at Eagle Bank
-	// that eagle bank then send email with verification link to the email provided at CreateUser step.
+	// that eagle bank then send an email with a verification link to the email provided at CreateUser step.
 
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusCreated, user)
 }
 
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	h.logger.Infow("UpdateUser handler started")
+	panic("not-implemented")
+}
+
 func (h *UserHandler) VerifyEmail(c *gin.Context) {
+	h.logger.Infow("VerifyEmail handler started")
 	var req VerifyEmailRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request payload"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
@@ -154,6 +172,7 @@ func (h *UserHandler) VerifyEmail(c *gin.Context) {
 }
 
 func (h *UserHandler) SetPassword(c *gin.Context) {
+	h.logger.Infow("SetPassword handler started")
 	var req SetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})

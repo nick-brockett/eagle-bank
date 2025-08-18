@@ -6,14 +6,17 @@ import (
 	"eagle-bank.com/internal/core/domain/model"
 	"eagle-bank.com/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func NewAccountHandler(
+	logger *zap.SugaredLogger,
 	authService port.AuthService,
 	userService port.UserService,
 	accountService port.AccountService,
 ) AccountHandler {
 	return AccountHandler{
+		logger:         logger,
 		authService:    authService,
 		userService:    userService,
 		accountService: accountService,
@@ -21,6 +24,7 @@ func NewAccountHandler(
 }
 
 type AccountHandler struct {
+	logger         *zap.SugaredLogger
 	authService    port.AuthService
 	userService    port.UserService
 	accountService port.AccountService
@@ -59,4 +63,12 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusCreated, account)
+}
+
+func (h *AccountHandler) ListAccounts(c *gin.Context) {
+	panic("not-implemented ")
+}
+
+func (h *AccountHandler) GetAccount(c *gin.Context) {
+	panic("not-implemented ")
 }
