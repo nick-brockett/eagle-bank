@@ -9,6 +9,7 @@ import (
 	"eagle-bank.com/internal/core/domain/model"
 	"eagle-bank.com/internal/core/port/mocks"
 	"eagle-bank.com/internal/testsupport"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/google/uuid"
@@ -18,6 +19,8 @@ import (
 )
 
 func TestUserHandler_CreateUser(t *testing.T) {
+
+	logger := zaptest.NewLogger(t).Sugar()
 
 	testUser := model.User{
 		ID:          uuid.NewString(),
@@ -193,7 +196,7 @@ func TestUserHandler_CreateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		tt := tt
-		testHandler := http.NewUserHandler(tt.authService, tt.userService)
+		testHandler := http.NewUserHandler(logger, tt.authService, tt.userService)
 		c, w := testsupport.NewTestContext(tt.newUser)
 
 		t.Run(tt.desc, func(t *testing.T) {
